@@ -90,12 +90,6 @@ datasets = {
         "cls": torchvision.datasets.CIFAR10,
         "num_epochs": 100,
         "transform": transform
-    },
-    "cifar100": {
-        "num_classes": 100,
-        "cls": torchvision.datasets.CIFAR100,
-        "num_epochs": 100,
-        "transform": transform,
     }
 }
 
@@ -114,7 +108,13 @@ datasets = {
     "cls": torchvision.datasets.FashionMNIST,
     "num_epochs": 100,
     "transform": transform
-},
+},,
+    "cifar100": {
+        "num_classes": 100,
+        "cls": torchvision.datasets.CIFAR100,
+        "num_epochs": 100,
+        "transform": transform,
+    }
 """
 num_devices = 20
 num_repeats = 5
@@ -123,31 +123,35 @@ if __name__ == "__main__":
     for data_name, dataset in datasets.items():
         print(data_name, dataset)
         seed_everything(1)
-        trainset = dataset["cls"](root='./data', train=True, download=True, transform=dataset["transform"])
-
-        shuffled_indices = shuffle(np.arange(len(trainset)))
-        num_traindata = int(len(shuffled_indices)*0.9)
-        train_indices = np.array_split(shuffled_indices[:num_traindata], 20)
-        val_inds = shuffled_indices[num_traindata:]
         
+        trainset = dataset["cls"](root='./data', train=True, download=True, transform=dataset["transform"])
+        
+        shuffled_indices = shuffle(np.arange(len(trainset)))
+        
+        num_traindata = int(len(shuffled_indices)*0.9)
+        
+        val_inds = shuffled_indices[num_traindata:]
         valset = Subset(trainset, val_inds)
+        valloader = torch.utils.data.DataLoader(valset, batch_size=128, shuffle=False, num_workers=2)
 
+
+        testset = dataset["cls"](
+            root='./data', train=False, download=True, transform=transform)
+        testloader = torch.utils.data.DataLoader(
+            testset, batch_size=128, shuffle=False, num_workers=2)
+        
         for seed_idx in range(num_repeats):
+            seed_everything(seed_idx)
+
+            train_indices = np.array_split(shuffled_indices[:num_traindata], 20)
+            
             for device_idx, inds in enumerate(train_indices):
+                seed_everything(seed_idx)
+
                 print("Device", device_idx)
-                seed_everything(1)
                 trainloader = torch.utils.data.DataLoader(
                     Subset(trainset, inds), batch_size=128, shuffle=True, num_workers=2)
                 
-                valloader = torch.utils.data.DataLoader(
-                    valset, batch_size=128, shuffle=False, num_workers=2)
-
-                testset = dataset["cls"](
-                    root='./data', train=False, download=True, transform=transform)
-                testloader = torch.utils.data.DataLoader(
-                    testset, batch_size=128, shuffle=False, num_workers=2)
-
-                seed_everything(seed_idx)
                 # Model
                 net = MobileNetV2(num_classes=dataset["num_classes"])
                 net = net.to(device)
