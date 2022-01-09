@@ -85,15 +85,26 @@ transform = transforms.Compose([
 ])
 
 datasets = {
-    "cifar10": {
+    "mnist": {
         "num_classes": 10,
-        "cls": torchvision.datasets.CIFAR10,
+        "cls": torchvision.datasets.MNIST,
         "num_epochs": 100,
-        "transform": transform
-    }
+        "transform": transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.2,)),
+        ]),
+        "num_channels": 1
+    },
 }
 
 """
+"cifar10": {
+    "num_classes": 10,
+    "cls": torchvision.datasets.CIFAR10,
+    "num_epochs": 100,
+    "transform": transform,
+    "num_channels": 3
+}
 "mnist": {
     "num_classes": 10,
     "cls": torchvision.datasets.MNIST,
@@ -101,19 +112,22 @@ datasets = {
     "transform": transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.2,)),
-    ])
+    ]),
+    "num_channels": 1
 },
 "fashionmnist": {
     "num_classes": 100,
     "cls": torchvision.datasets.FashionMNIST,
     "num_epochs": 100,
-    "transform": transform
-},,
+    "transform": transform,
+    "num_channels": 1
+},
     "cifar100": {
         "num_classes": 100,
         "cls": torchvision.datasets.CIFAR100,
         "num_epochs": 100,
         "transform": transform,
+        "num_channels": 3
     }
 """
 num_devices = 20
@@ -136,7 +150,7 @@ if __name__ == "__main__":
 
 
         testset = dataset["cls"](
-            root='./data', train=False, download=True, transform=transform)
+            root='./data', train=False, download=True, transform=dataset["transform"])
         testloader = torch.utils.data.DataLoader(
             testset, batch_size=128, shuffle=False, num_workers=2)
         
@@ -153,7 +167,7 @@ if __name__ == "__main__":
                     Subset(trainset, inds), batch_size=128, shuffle=True, num_workers=2)
                 
                 # Model
-                net = MobileNetV2(num_classes=dataset["num_classes"])
+                net = MobileNetV2(num_classes=dataset["num_classes"], in_channels = dataset["num_channels"])
                 net = net.to(device)
                 if device == 'cuda':
                     net = torch.nn.DataParallel(net)

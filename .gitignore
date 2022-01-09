@@ -3,6 +3,7 @@ data/mnist
 data/cifar10
 results
 results_old
+results*
 data
 # Byte-compiled / optimized / DLL files
 mlflow
