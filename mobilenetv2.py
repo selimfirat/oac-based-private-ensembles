@@ -76,5 +76,7 @@ class MobileNetV2(nn.Module):
         out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
-        #out = nn.functional.softmax(out)
+        
+        out = nn.functional.softmax(out, dim=1)
+        
         return out
