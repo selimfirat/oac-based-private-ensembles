@@ -48,10 +48,12 @@ def select_participating_devices(p, num_devices):
     
     return participating_clients
 
-def add_channel_noise(signal, snr=0.0):
-    sigma = 0.1 # TODO
+def add_channel_noise(signal, channel_snr):
+    sigma_channel = torch.sqrt( torch.mean((signal ** 2), dim=0) / channel_snr )
     
-    res = signal + torch.normal(0, sigma, size=signal.shape)
+    print(sigma_channel.unsqueeze(0).shape, sigma_channel.unsqueeze(0).repeat(signal.shape[0], 1).shape, signal.shape)
+    
+    res = signal + torch.normal(0, sigma_channel.unsqueeze(0).repeat(signal.shape[0], 1))
 
     return res
 
@@ -62,11 +64,13 @@ def add_privacy_noise(signal, epsilon, num_participating_clients, p):
 
     return res
 
-def air_sum(signals):
+def air_sum(signals, channel_snr):
     
     signal = torch.sum(torch.stack(signals, dim=0), dim=0)
     
-    signal = add_channel_noise(signal)
+    signal = add_channel_noise(signal, channel_snr)
+    
+    print(signal.shape)
     
     return signal
 
@@ -88,7 +92,7 @@ def server_model(signal, A_t):
     
     return (signal / A_t).argmax(dim=1)
 
-def get_avg_scores(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon):
+def get_avg_scores(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr):
     results = get_results(data_name=data_name, num_devices=num_devices, num_repeats=num_repeats, main_dir="results")
     
     total_score = 0.0
@@ -101,7 +105,7 @@ def get_avg_scores(data_name, num_repeats, num_devices, p, A_t, client_output, i
         
         participating_client_beliefs = [client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, len(participating_clients), p, A_t) for device_idx in participating_clients]
         
-        received_signal = air_sum(participating_client_beliefs)
+        received_signal = air_sum(participating_client_beliefs, channel_snr)
         
         y_test_pred = server_model(received_signal, A_t)
         
@@ -118,7 +122,8 @@ if __name__ == "__main__":
     client_output = "belief" # belief or label
     epsilon = 1.0
     is_private = True
+    channel_snr = 10.0
     
-    avg_score = get_avg_scores(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon)
+    avg_score = get_avg_scores(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr)
     
     print(avg_score)
