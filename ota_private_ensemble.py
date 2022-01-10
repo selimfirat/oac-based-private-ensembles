@@ -51,7 +51,7 @@ def select_participating_devices(p, num_devices):
 def add_channel_noise(signal, channel_snr):
     sigma_channel = torch.sqrt( torch.mean((signal ** 2), dim=0) / channel_snr )
     
-    print(sigma_channel.unsqueeze(0).shape, sigma_channel.unsqueeze(0).repeat(signal.shape[0], 1).shape, signal.shape)
+    #    print(sigma_channel.unsqueeze(0).shape, sigma_channel.unsqueeze(0).repeat(signal.shape[0], 1).shape, signal.shape)
     
     res = signal + torch.normal(0, sigma_channel.unsqueeze(0).repeat(signal.shape[0], 1))
 
@@ -92,7 +92,7 @@ def server_model(signal, A_t):
     
     return (signal / A_t).argmax(dim=1)
 
-def get_avg_scores(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr):
+def get_avg_score(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr):
     results = get_results(data_name=data_name, num_devices=num_devices, num_repeats=num_repeats, main_dir="results")
     
     total_score = 0.0
@@ -113,6 +113,26 @@ def get_avg_scores(data_name, num_repeats, num_devices, p, A_t, client_output, i
     
     return total_score / num_repeats
 
+def get_avg_score_single_model(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr):
+    results = get_results(data_name=data_name, num_devices=num_devices, num_repeats=num_repeats, main_dir="results")
+    
+    total_score = 0.0
+    for seed_idx, (y_test_beliefs_dict, y_test_true) in get_y_test_beliefs(results, num_repeats).items():
+        
+        print(f"Seed {seed_idx}")
+        seed_everything(seed_idx)
+        
+        for device_idx in range(num_devices):
+            client_beliefs = client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t)
+        
+            received_signal = add_channel_noise(client_beliefs, channel_snr) # air_sum(client_beliefs, channel_snr)
+        
+            y_test_pred = server_model(received_signal, A_t)
+        
+            total_score += calculate_score(y_test_true, y_test_pred)
+    
+    return total_score / (num_repeats*num_devices)
+
 if __name__ == "__main__":
     num_repeats = 5
     num_devices = 20
@@ -124,6 +144,6 @@ if __name__ == "__main__":
     is_private = True
     channel_snr = 10.0
     
-    avg_score = get_avg_scores(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr)
+    avg_score = get_avg_score(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr)
     
     print(avg_score)

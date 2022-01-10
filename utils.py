@@ -135,3 +135,10 @@ def format_time(seconds):
     if f == '':
         f = '0ms'
     return f
+
+def save_txt(dirpath, fname, content):
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+        
+    with open(os.path.join(dirpath,fname), 'w+') as f:
+        f.write(content)

@@ -4,6 +4,7 @@ data/cifar10
 results
 results_old
 results*
+figures
 data
 # Byte-compiled / optimized / DLL files
 mlflow
