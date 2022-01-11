@@ -31,6 +31,21 @@ def get_y_test_beliefs(results, num_repeats):
 
     return res
 
+def get_y_val_test_beliefs(results, num_repeats):
+    res = {}
+    for seed_idx in range(num_repeats):
+        res[seed_idx] = ({ 
+                device_idx: seed_dict["y_val_pred_beliefs"] for device_idx, seed_dict in results[seed_idx].items()
+            },
+            results[seed_idx][0]["y_val_true"],
+            { 
+                device_idx: seed_dict["y_test_pred_beliefs"] for device_idx, seed_dict in results[seed_idx].items()
+            },
+            results[seed_idx][0]["y_test_true"]
+        )
+
+    return res
+
 def calculate_score(y_true, y_pred):
     
     return f1_score(y_true, y_pred, average="macro")
@@ -117,21 +132,28 @@ def get_avg_score_single_model(data_name, num_repeats, num_devices, p, A_t, clie
     results = get_results(data_name=data_name, num_devices=num_devices, num_repeats=num_repeats, main_dir="results")
     
     total_score = 0.0
-    for seed_idx, (y_test_beliefs_dict, y_test_true) in get_y_test_beliefs(results, num_repeats).items():
+    for seed_idx, (y_val_beliefs_dict, y_val_true, y_test_beliefs_dict, y_test_true) in get_y_val_test_beliefs(results, num_repeats).items():
         
         print(f"Seed {seed_idx}")
         seed_everything(seed_idx)
         
+        cur_best_valscore = -np.inf 
+        cur_best_testscore = -np.inf 
         for device_idx in range(num_devices):
-            client_beliefs = client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t)
-        
-            received_signal = add_channel_noise(client_beliefs, channel_snr) # air_sum(client_beliefs, channel_snr)
-        
-            y_test_pred = server_model(received_signal, A_t)
-        
-            total_score += calculate_score(y_test_true, y_test_pred)
-    
-    return total_score / (num_repeats*num_devices)
+            y_val_pred = y_val_beliefs_dict[device_idx].argmax(dim=1)
+            valscore = calculate_score(y_val_true, y_val_pred)
+
+            if valscore > cur_best_valscore:
+                cur_best_valscore = valscore
+
+                client_beliefs = client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t)
+                received_signal = add_channel_noise(client_beliefs, channel_snr) # air_sum(client_beliefs, channel_snr)
+                y_test_pred = server_model(received_signal, A_t)
+                cur_best_testscore = calculate_score(y_test_true, y_test_pred)
+
+        total_score += cur_best_testscore
+
+    return total_score / num_repeats
 
 if __name__ == "__main__":
     num_repeats = 5

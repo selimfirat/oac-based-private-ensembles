@@ -35,12 +35,13 @@ def binary_search_sigma(init_min, init_max, eps, delta, m, p):
     return total_sigma/np.sqrt(m)
 
 # Test:
-import matplotlib.pyplot as plt
-p_vect = np.arange(0.1,1.1,0.1)
-resVect = []
-for p in p_vect:
-    resVect.append(binary_search_sigma(0,20,1.0,1e-6,p*10,p))
-plt.plot(p_vect,resVect)
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    p_vect = np.arange(0.1,1.1,0.1)
+    resVect = []
+    for p in p_vect:
+        resVect.append(binary_search_sigma(0,20,1.0,1e-6,p*10,p))
+    plt.plot(p_vect,resVect)
         
     
 

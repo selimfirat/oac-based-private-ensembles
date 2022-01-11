@@ -51,7 +51,7 @@ for dataset_name, dataset in datasets.items():
     tick align=outside,
     tick pos=left,
     x grid style={white!69.0196078431373!black},
-    xmin=0.1, xmax=1.0,
+    xmin=1, xmax=20,
     xmode=linear,
     xtick style={color=black},
     y grid style={white!69.0196078431373!black},
@@ -92,7 +92,7 @@ for dataset_name, dataset in datasets.items():
             table {
     """
             
-            for p in np.arange(5, 101, 5):
+            for p in np.arange(1, 21, 1):
                 macro_f1 = item(p)
                 res += "{:.2f}".format(p) + "\t" + "{:.3f}".format(macro_f1) + "\n"
             
