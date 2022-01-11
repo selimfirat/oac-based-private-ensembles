@@ -24,7 +24,7 @@ datasets = {
         "legendpos": r"at={(0.98,0.98)}, anchor=north east}"
     },
     "fashionmnist": {
-        "name": "FashionMnist",
+        "name": "Fashion-Mnist",
         "ymin": 0.0,
         "ymax": 1.0,
         "legendpos": r"at={(0.98,0.98)}, anchor=north east}"
@@ -57,7 +57,7 @@ for dataset_name, dataset in datasets.items():
     y grid style={white!69.0196078431373!black},
     ymin=""" + str(dataset["ymin"]) + r""", ymax=""" + str(dataset["ymax"])  + r""",
     ymode=linear,
-    ytick style={color=black},xlabel={\small Participation Probability $p$},
+    ytick style={color=black},xlabel={\small Channel Noise SNR},
     ylabel={\small Macro-F1},
     grid
     ]
@@ -66,22 +66,22 @@ for dataset_name, dataset in datasets.items():
     plot_end = r"""
     \end{axis}
     \end{tikzpicture}
-    \caption{Performance on the """ + dataset["name"] + r""" dataset for the introduced methods for varying participation probability $p$.}
-    \label{fig:p_vs_macrof1}
+    \caption{Performance on the """ + dataset["name"] + r""" dataset for varying channel noise signal-to-noise ratio (SNR).}
+    \label{fig:n_vs_macrof1}
     \end{figure}
     """
 
-    def p_vs_macro_f1_method(data, client_output, is_private):
+    def snr_vs_macro_f1_method(data, client_output, is_private):
 
         
-        return lambda p: get_avg_score(data_name=data, num_repeats=5, num_devices=20, p=p, A_t=1.0, client_output=client_output, is_private=is_private, epsilon=1.0, channel_snr=10)
+        return lambda snr: get_avg_score(data_name=data, num_repeats=5, num_devices=20, p=1.0, A_t=1.0, client_output=client_output, is_private=is_private, epsilon=1.0, channel_snr=snr)
 
     if __name__ == "__main__":
         items = {
-            r"OTA Majority Voting ($\epsilon=\infty$)": p_vs_macro_f1_method(dataset_name, "label", False),
-            r"OTA Belief Summation ($\epsilon=\infty$)": p_vs_macro_f1_method(dataset_name, "belief", False),
-            r"OTA Majority Voting ($\epsilon=1$)": p_vs_macro_f1_method(dataset_name, "label", True),
-            r"OTA Belief Summation ($\epsilon=1$)": p_vs_macro_f1_method(dataset_name, "belief", True),
+            r"OTA Majority Voting ($\epsilon=\infty$)": snr_vs_macro_f1_method(dataset_name, "label", False),
+            r"OTA Belief Summation ($\epsilon=\infty$)": snr_vs_macro_f1_method(dataset_name, "belief", False),
+            r"OTA Majority Voting ($\epsilon=1$)": snr_vs_macro_f1_method(dataset_name, "label", True),
+            r"OTA Belief Summation ($\epsilon=1$)": snr_vs_macro_f1_method(dataset_name, "belief", True),
         }
         
         n = 20
@@ -92,7 +92,7 @@ for dataset_name, dataset in datasets.items():
             table {
     """
             
-            for p in np.arange(0.1, 1.01, 0.1):
+            for p in np.arange(5, 101, 5):
                 macro_f1 = item(p)
                 res += "{:.2f}".format(p) + "\t" + "{:.3f}".format(macro_f1) + "\n"
             
@@ -101,4 +101,4 @@ for dataset_name, dataset in datasets.items():
 
         res += plot_end
             
-        save_txt("figures", f"figure_p_vs_macrof1_{dataset_name}.tex", res)
+        save_txt("figures", f"figure_snr_vs_macrof1_{dataset_name}.tex", res)

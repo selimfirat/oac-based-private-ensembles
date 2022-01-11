@@ -4,7 +4,7 @@ from privacy import binary_search_sigma
 from utils import save_txt
 
 plot_begin = r"""
-\begin{figure}
+\begin{figure}[htbp!]
 \centering
 \begin{tikzpicture}[scale=0.8]
 
