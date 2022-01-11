@@ -15,7 +15,7 @@ def binary_search_sigma(init_min, init_max, eps, delta, m, p):
     eps_p = np.log(1+(1/p)*(np.exp(eps)-1))
     
     def get_delta(sigma):
-        return p*(norm.cdf(1/sigma-(eps_p*sigma)/2) - np.exp(eps_p)*norm.cdf(-1/sigma-(eps_p*sigma)/2))
+        return p*(norm.cdf(1/(np.sqrt(2)*sigma)-(eps_p*sigma)/np.sqrt(2)) - np.exp(eps_p)*norm.cdf(-1/(np.sqrt(2)*sigma)-(eps_p*sigma)/np.sqrt(2)))
         
     cur_min = init_min
     cur_max = init_max
@@ -34,13 +34,13 @@ def binary_search_sigma(init_min, init_max, eps, delta, m, p):
     total_sigma = 0.5*(cur_min + cur_max)
     return total_sigma/np.sqrt(m)
 
-# # Test:
-# import matplotlib.pyplot as plt
-# p_vect = np.arange(0.1,1.1,0.1)
-# resVect = []
-# for p in p_vect:
-#     resVect.append(binary_search_sigma(0,20,1.0,1e-6,p*10,p))
-# plt.plot(p_vect,resVect)
+# Test:
+import matplotlib.pyplot as plt
+p_vect = np.arange(0.1,1.1,0.1)
+resVect = []
+for p in p_vect:
+    resVect.append(binary_search_sigma(0,20,1.0,1e-6,p*10,p))
+plt.plot(p_vect,resVect)
         
     
 
