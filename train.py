@@ -1,6 +1,6 @@
 '''Train CIFAR10 with PyTorch. Took parts of the code from: https://github.com/kuangliu/pytorch-cifar''' 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 #os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 from utils import seed_everything
@@ -121,7 +121,7 @@ datasets = {
         "num_channels": 1
     },
     "fashionmnist": {
-        "num_classes": 100,
+        "num_classes": 10,
         "cls": torchvision.datasets.FashionMNIST,
         "num_epochs": 100,
         "transform": gray_transform,

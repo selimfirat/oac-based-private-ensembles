@@ -76,7 +76,7 @@ def air_sum(signals, channel_snr):
 
 def client_model(beliefs, client_output, is_private, epsilon, num_participating_clients, p, A_t):
 
-    res = torch.nn.functional.softmax(beliefs, dim=1)
+    res = beliefs # torch.nn.functional.softmax(beliefs, dim=1) already softmax output
     
     if client_output == "label":
         res = torch.nn.functional.one_hot(res.argmax(dim=1), beliefs.shape[1])

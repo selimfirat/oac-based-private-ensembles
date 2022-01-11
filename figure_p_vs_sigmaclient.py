@@ -39,7 +39,7 @@ plot_end = r"""
 \end{axis}
 \end{tikzpicture}
 \caption{Participation probability $p$ vs required $\sigma_{\mathmrm{client}}$ for various $\epsilon$.}
-\label{fig:p}
+\label{fig:p_vs_sigmaclient}
 \end{figure}
 """
 
@@ -55,9 +55,11 @@ if __name__ == "__main__":
     for item in items:
         res += r"""\addlegendentry{\footnotesize $\epsilon = """ + str(item["epsilon"]) + r""", \delta=10^{-6}$}
         \addplot [very thick, """ + item["color"] + r""", mark=x, mark size=3, mark options={solid}]
-        table {%"""
+        table {
+"""
         
         for p in np.arange(0.1, 1.01, 0.1):
+            print(p)
             sigma = binary_search_sigma(0, 20, item["epsilon"], 1e-6, p*n, p)
             res += "{:.2f}".format(p) + "\t" + "{:.3f}".format(sigma) + "\n"
         
