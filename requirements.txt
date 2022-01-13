@@ -1,8 +1,7 @@
 numpy
 scikit-learn
-ray[default]
 mlflow
-dill
-optuna
 torch
 torchvision
+transformers
+datasets

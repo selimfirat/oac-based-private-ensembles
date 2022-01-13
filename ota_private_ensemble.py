@@ -155,6 +155,35 @@ def get_avg_score_single_model(data_name, num_repeats, num_devices, p, A_t, clie
 
     return total_score / num_repeats
 
+def get_avg_score_different_channels(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr):
+    results = get_results(data_name=data_name, num_devices=num_devices, num_repeats=num_repeats, main_dir="results")
+    
+    total_score = 0.0
+    for seed_idx, (y_test_beliefs_dict, y_test_true) in get_y_test_beliefs(results, num_repeats).items():
+        
+        print(f"Seed {seed_idx}")
+        seed_everything(seed_idx)
+        participating_clients = select_participating_devices(p, num_devices)
+        print("# Participating Clients: ",len(participating_clients))
+        
+        participating_client_beliefs = [client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t) for device_idx in participating_clients]
+        
+        num_classes = participating_client_beliefs[0].shape[1]
+        
+        final_signal = torch.zeros_like(participating_client_beliefs[0])
+        
+        received_signal = torch.cat(participating_client_beliefs, dim=1)
+        received_signal = add_channel_noise(received_signal, channel_snr)
+        
+        for i in range(len(participating_clients)):
+            final_signal += received_signal[:, i*num_classes:(i+1)*num_classes]
+        
+        y_test_pred = server_model(final_signal, A_t)
+        
+        total_score += calculate_score(y_test_true, y_test_pred)
+    
+    return total_score / num_repeats
+
 if __name__ == "__main__":
     num_repeats = 5
     num_devices = 20
@@ -166,6 +195,6 @@ if __name__ == "__main__":
     is_private = True
     channel_snr = 10.0
     
-    avg_score = get_avg_score(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr)
+    avg_score = get_avg_score_different_channels(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr)
     
     print(avg_score)
