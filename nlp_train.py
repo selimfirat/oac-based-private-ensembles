@@ -1,6 +1,6 @@
 '''Train CIFAR10 with PyTorch. Took parts of the code from: https://github.com/kuangliu/pytorch-cifar''' 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 #os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 from utils import seed_everything
@@ -57,7 +57,7 @@ def eval_on_data(dataloader, net):
     return res
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
+print(device)
 datasets = {
     "yelp_review_full": {
         "num_classes": 5,

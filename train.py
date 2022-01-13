@@ -1,5 +1,6 @@
 '''Train CIFAR10 with PyTorch. Took parts of the code from: https://github.com/kuangliu/pytorch-cifar''' 
 import os
+from turtle import forward
 os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 #os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
@@ -18,11 +19,26 @@ import numpy as np
 from sklearn.utils import shuffle
 import argparse
 
-from mobilenetv2 import MobileNetV2
 from utils import progress_bar
 from argparse import ArgumentParser
 
 
+class Model(nn.Module):
+    
+    def __init__(self, num_classes):
+        super(Model, self).__init__()
+
+        self.num_classes = num_classes
+        self.mobilenet = torchvision.models.mobilenet_v3_large(pretrained=True)
+        self.mobilenet.classifier[3] = nn.Linear(self.mobilenet.classifier[3].in_features, num_classes)
+    
+    def forward(self, x):
+        
+        res = self.mobilenet(x)
+        res = nn.functional.softmax(res, dim=1)
+
+        return res
+        
 # Training
 def train(epoch, trainloader, net, criterion, optimizer):
     print('\nEpoch: %d' % epoch)
@@ -81,62 +97,45 @@ def eval_on_data(dataloader, net, criterion):
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+def gray2rgb(image):
+    return image.repeat(3, 1, 1)
+
 rgb_transform = transforms.Compose([
     transforms.ToTensor(),
+    transforms.Resize((224, 224)),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 
 gray_transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.2,)),
+            transforms.Lambda(gray2rgb),
+            transforms.Resize((224, 224)),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
 
 datasets = {
     "cifar10": {
         "num_classes": 10,
         "cls": torchvision.datasets.CIFAR10,
-        "num_epochs": 100,
         "transform": rgb_transform,
-        "num_channels": 3
-    },
-    "cifar100": {
-        "num_classes": 100,
-        "cls": torchvision.datasets.CIFAR100,
-        "num_epochs": 100,
-        "transform": rgb_transform,
-        "num_channels": 3
     },
     "mnist": {
         "num_classes": 10,
         "cls": torchvision.datasets.MNIST,
-        "num_epochs": 100,
         "transform": gray_transform,
-        "num_channels": 1
-    },
-    "emnist": {
-        "num_classes": 26,
-        "cls": torchvision.datasets.EMNIST,
-        "num_epochs": 100,
-        "transform": gray_transform,
-        "num_channels": 1
     },
     "fashionmnist": {
         "num_classes": 10,
         "cls": torchvision.datasets.FashionMNIST,
-        "num_epochs": 100,
         "transform": gray_transform,
-        "num_channels": 1
     },
 }
 
-def train_and_save(data_name, num_devices, num_repeats):
+def train_and_save(data_name, num_devices, num_repeats, num_epochs):
     seed_everything(1)
     dataset = datasets[data_name]
     
-    if data_name == "emnist":
-        trainset = dataset["cls"](root='./data', train=True, download=True, transform=dataset["transform"], split="letters")
-    else:
-        trainset = dataset["cls"](root='./data', train=True, download=True, transform=dataset["transform"])
+    trainset = dataset["cls"](root='./data', train=True, download=True, transform=dataset["transform"])
     
     shuffled_indices = shuffle(np.arange(len(trainset)))
     
@@ -147,10 +146,7 @@ def train_and_save(data_name, num_devices, num_repeats):
     valloader = torch.utils.data.DataLoader(valset, batch_size=128, shuffle=False, num_workers=2)
 
 
-    if data_name == "emnist":
-        testset = dataset["cls"](root='./data', train=False, download=True, transform=dataset["transform"], split="letters")
-    else:
-        testset = dataset["cls"](root='./data', train=False, download=True, transform=dataset["transform"])
+    testset = dataset["cls"](root='./data', train=False, download=True, transform=dataset["transform"])
         
     testloader = torch.utils.data.DataLoader(
         testset, batch_size=128, shuffle=False, num_workers=2)
@@ -168,7 +164,8 @@ def train_and_save(data_name, num_devices, num_repeats):
                 Subset(trainset, inds), batch_size=128, shuffle=True, num_workers=2)
             
             # Model
-            net = MobileNetV2(num_classes=dataset["num_classes"], in_channels = dataset["num_channels"])
+            #net = MobileNetV2(num_classes=dataset["num_classes"], in_channels = dataset["num_channels"])
+            net = Model(num_classes = dataset["num_classes"])
             net = net.to(device)
             if device == 'cuda':
                 net = torch.nn.DataParallel(net)
@@ -177,9 +174,9 @@ def train_and_save(data_name, num_devices, num_repeats):
             criterion = nn.CrossEntropyLoss()
             optimizer = optim.SGD(net.parameters(), lr=0.1,
                                 momentum=0.9, weight_decay=5e-4)
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=dataset["num_epochs"])
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs)
 
-            for epoch in range(dataset["num_epochs"]):
+            for epoch in range(num_epochs):
                 train(epoch, trainloader, net, criterion, optimizer)
                 scheduler.step()
             
@@ -210,10 +207,11 @@ def train_and_save(data_name, num_devices, num_repeats):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--data", choices=["cifar10", "cifar100", "emnist", "fashionmnist", "mnist"])
-    parser.add_argument("--num_repeats", default=5, type=int)
+    parser.add_argument("--data", choices=["cifar10", "fashionmnist", "mnist"])
+    parser.add_argument("--num_repeats", default=1, type=int)
     parser.add_argument("--num_devices", default=20, type=int)
+    parser.add_argument("--num_epochs", default=50, type=int)
     
     cfg = vars(parser.parse_args())
     
-    train_and_save(cfg["data"], cfg["num_devices"], cfg["num_repeats"])
+    train_and_save(cfg["data"], cfg["num_devices"], cfg["num_repeats"], cfg["num_epochs"])
