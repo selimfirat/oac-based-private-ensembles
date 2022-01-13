@@ -61,8 +61,6 @@ print(device)
 datasets = {
     "yelp_review_full": {
         "num_classes": 5,
-        "cls": torchvision.datasets.CIFAR10,
-        "num_epochs": 100,
     }
 }
 
@@ -104,9 +102,9 @@ def train_and_save(data_name, num_devices, num_repeats):
     valset.set_format("torch", columns=['input_ids', 'attention_mask', 'label'])
     testset.set_format("torch", columns=['input_ids', 'attention_mask', 'label'])
     trainset.set_format("torch", columns=['input_ids', 'attention_mask', 'label'])
-    valloader = torch.utils.data.DataLoader(valset, batch_size=8, shuffle=False)
+    valloader = torch.utils.data.DataLoader(valset, batch_size=16, shuffle=False)
 
-    testloader = torch.utils.data.DataLoader(testset, batch_size=8, shuffle=False)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False)
     
     for seed_idx in range(num_repeats):
         seed_everything(seed_idx)
@@ -122,7 +120,7 @@ def train_and_save(data_name, num_devices, num_repeats):
 
             model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=dataset["num_classes"])
     
-            training_args = TrainingArguments(output_dir=f"tmp/{data_name}_{seed_idx}_{device_idx}", save_strategy="no", seed=seed_idx, report_to="none", per_device_train_batch_size=8)
+            training_args = TrainingArguments(output_dir=f"tmp/{data_name}_{seed_idx}_{device_idx}", save_strategy="no", seed=seed_idx, report_to="none", per_device_train_batch_size=16, num_train_epochs=1.0)
             trainer = Trainer(
                 model=model, args=training_args, train_dataset=device_trainset
             )
@@ -147,11 +145,16 @@ def train_and_save(data_name, num_devices, num_repeats):
                 "y_test_pred_beliefs": y_test_pred_beliefs
             }
 
+            targetdir = f"results/{data_name}_{num_devices}devices_seed{seed_idx}"
+            if not os.path.isdir(targetdir):
+                os.makedirs(targetdir)
+            
+            torch.save(res, f'{targetdir}/{device_idx}.pth')
 
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--data", choices=["yelp_review_full", "imdb"], default="imdb")
+    parser.add_argument("--data", choices=["yelp_review_full"], default="yelp_review_full")
     parser.add_argument("--num_repeats", default=5, type=int)
     parser.add_argument("--num_devices", default=20, type=int)
     
