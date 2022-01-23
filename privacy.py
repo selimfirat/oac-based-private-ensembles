@@ -11,7 +11,8 @@ from scipy.stats import norm
 
 # Functions for calculating privacy loss
 
-def binary_search_sigma(init_min, init_max, eps, delta, m, p):
+def binary_search_sigma(init_min, init_max, eps, delta, m, n, p_):
+    p = p_/(1-(1-p_)**n)
     eps_p = np.log(1+(1/p)*(np.exp(eps)-1))
     
     def get_delta(sigma):
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     p_vect = np.arange(0.1,1.1,0.1)
     resVect = []
     for p in p_vect:
-        resVect.append(binary_search_sigma(0,20,1.0,1e-6,p*10,p))
+        resVect.append(binary_search_sigma(0,20,1.0,1e-6,p*10,10,p))
     plt.plot(p_vect,resVect)
         
     
