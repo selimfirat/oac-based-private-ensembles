@@ -1,6 +1,6 @@
 '''Train CIFAR10 with PyTorch. Took parts of the code from: https://github.com/kuangliu/pytorch-cifar''' 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 #os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 from utils import seed_everything
@@ -17,8 +17,6 @@ import torchvision.transforms as transforms
 import numpy as np
 from sklearn.utils import shuffle
 import argparse
-
-from mobilenetv2 import MobileNetV2
 from utils import progress_bar
 from argparse import ArgumentParser
 
@@ -61,8 +59,15 @@ print(device)
 datasets = {
     "yelp_review_full": {
         "num_classes": 5,
+    },
+    "yelp_polarity": {
+        "num_classes": 2,
+    },
+    "imdb": {
+        "num_classes": 2,
     }
 }
+batch_size = 16
 
 def train_and_save(data_name, num_devices, num_repeats):
     seed_everything(1)
@@ -102,9 +107,9 @@ def train_and_save(data_name, num_devices, num_repeats):
     valset.set_format("torch", columns=['input_ids', 'attention_mask', 'label'])
     testset.set_format("torch", columns=['input_ids', 'attention_mask', 'label'])
     trainset.set_format("torch", columns=['input_ids', 'attention_mask', 'label'])
-    valloader = torch.utils.data.DataLoader(valset, batch_size=16, shuffle=False)
+    valloader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
 
-    testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False)
     
     for seed_idx in range(num_repeats):
         seed_everything(seed_idx)
@@ -116,17 +121,17 @@ def train_and_save(data_name, num_devices, num_repeats):
 
             device_trainset = trainset.select(inds)
 
-            trainloader = torch.utils.data.DataLoader(device_trainset, batch_size=8, shuffle=False)
+            trainloader = torch.utils.data.DataLoader(device_trainset, batch_size=batch_size, shuffle=False)
 
             model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=dataset["num_classes"])
     
-            training_args = TrainingArguments(output_dir=f"tmp/{data_name}_{seed_idx}_{device_idx}", save_strategy="no", seed=seed_idx, report_to="none", per_device_train_batch_size=16, num_train_epochs=1.0)
+            training_args = TrainingArguments(output_dir=f"tmp/{data_name}_{seed_idx}_{device_idx}", save_strategy="no", seed=seed_idx, report_to="none", per_device_train_batch_size=batch_size, num_train_epochs=3.0)
             trainer = Trainer(
                 model=model, args=training_args, train_dataset=device_trainset
             )
             trainer.train()
             
-            y_train_true, y_train_pred, y_train_pred_beliefs = eval_on_data(trainloader, model)
+            #y_train_true, y_train_pred, y_train_pred_beliefs = eval_on_data(trainloader, model)
             y_val_true, y_val_pred, y_val_pred_beliefs = eval_on_data(valloader, model)
             y_test_true, y_test_pred, y_test_pred_beliefs = eval_on_data(testloader, model)
 
@@ -134,9 +139,9 @@ def train_and_save(data_name, num_devices, num_repeats):
                 "model": model.state_dict(),
                 "inds": inds,
                 "device_idx": device_idx,
-                "y_train_true": y_train_true,
-                "y_train_pred": y_train_pred,
-                "y_train_pred_beliefs": y_train_pred_beliefs,
+                #"y_train_true": y_train_true,
+                #"y_train_pred": y_train_pred,
+                #"y_train_pred_beliefs": y_train_pred_beliefs,
                 "y_val_true": y_val_true,
                 "y_val_pred": y_val_pred,
                 "y_val_pred_beliefs": y_val_pred_beliefs,
@@ -154,7 +159,7 @@ def train_and_save(data_name, num_devices, num_repeats):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--data", choices=["yelp_review_full"], default="yelp_review_full")
+    parser.add_argument("--data", choices=datasets.keys(), default="yelp_review_full")
     parser.add_argument("--num_repeats", default=5, type=int)
     parser.add_argument("--num_devices", default=20, type=int)
     

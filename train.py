@@ -1,7 +1,7 @@
 '''Train CIFAR10 with PyTorch. Took parts of the code from: https://github.com/kuangliu/pytorch-cifar''' 
 import os
 from turtle import forward
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 #os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 from utils import seed_everything
@@ -103,20 +103,25 @@ def gray2rgb(image):
 rgb_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Resize((224, 224)),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
 ])
 
 gray_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Lambda(gray2rgb),
             transforms.Resize((224, 224)),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ])
 
 datasets = {
     "cifar10": {
         "num_classes": 10,
         "cls": torchvision.datasets.CIFAR10,
+        "transform": rgb_transform,
+    },
+    "cifar100": {
+        "num_classes": 100,
+        "cls": torchvision.datasets.CIFAR100,
         "transform": rgb_transform,
     },
     "mnist": {
@@ -207,8 +212,8 @@ def train_and_save(data_name, num_devices, num_repeats, num_epochs):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--data", choices=["cifar10", "fashionmnist", "mnist"])
-    parser.add_argument("--num_repeats", default=1, type=int)
+    parser.add_argument("--data", choices=["cifar10", "fashionmnist", "mnist", "cifar100"])
+    parser.add_argument("--num_repeats", default=5, type=int)
     parser.add_argument("--num_devices", default=20, type=int)
     parser.add_argument("--num_epochs", default=50, type=int)
     

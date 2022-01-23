@@ -57,7 +57,7 @@ for dataset_name, dataset in datasets.items():
     y grid style={white!69.0196078431373!black},
     ymin=""" + str(dataset["ymin"]) + r""", ymax=""" + str(dataset["ymax"])  + r""",
     ymode=linear,
-    ytick style={color=black},xlabel={\small Channel Noise SNR},
+    ytick style={color=black},xlabel={\small Channel Noise SNR (dB)},
     ylabel={\small Macro-F1},
     grid
     ]
@@ -93,7 +93,7 @@ for dataset_name, dataset in datasets.items():
     """
             
             for p in np.arange(1, 21, 1):
-                macro_f1 = item(p)
+                macro_f1 = item(10**(0.1*p))
                 res += "{:.2f}".format(p) + "\t" + "{:.3f}".format(macro_f1) + "\n"
             
             res += r"""};
