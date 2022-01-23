@@ -42,30 +42,30 @@ if __name__ == "__main__":
         r"Single Best Vote ($\epsilon=\infty$)": generate_dict(shown_datasets, single_model, "label", False),
         r"Orthogonal Majority Voting ($\epsilon=\infty$)": generate_dict(shown_datasets, orthogonal_model, "label", False),
         r"Orthogonal Belief Summation ($\epsilon=\infty$)": generate_dict(shown_datasets, orthogonal_model, "belief", False),
-        r"OAC Majority Voting ($\epsilon=\infty$)": generate_dict(shown_datasets, ota_method, "label", False), 
-        r"OAC Belief Summation ($\epsilon=\infty$)":  generate_dict(shown_datasets, ota_method, "belief", False),
+        r"Majority Voting with OAC ($\epsilon=\infty$)": generate_dict(shown_datasets, ota_method, "label", False), 
+        r"Belief Summation with OAC ($\epsilon=\infty$)":  generate_dict(shown_datasets, ota_method, "belief", False),
     }
 
     items_private = {
         r"Single Best Vote ($\epsilon=1$)": generate_dict(shown_datasets, single_model, "label", True),
         r"Orthogonal Majority Voting ($\epsilon=1$)": generate_dict(shown_datasets, orthogonal_model, "label", True),
         r"Orthogonal Belief Summation ($\epsilon=1$)": generate_dict(shown_datasets, orthogonal_model, "belief", True),
-        r"OAC Majority Voting ($\epsilon=1$)": generate_dict(shown_datasets, ota_method, "label", True), 
-        r"OAC Belief Summation ($\epsilon=1$)":  generate_dict(shown_datasets, ota_method, "belief", True),
+        r"Majority Voting with OAC ($\epsilon=1$)": generate_dict(shown_datasets, ota_method, "label", True), 
+        r"Belief Summation with OAC ($\epsilon=1$)":  generate_dict(shown_datasets, ota_method, "belief", True),
     }
     items_weakprivate = {
         r"Single Best Vote ($\epsilon=10$)": generate_dict(shown_datasets, single_model, "label", True, 10),
         r"Orthogonal Majority Voting ($\epsilon=10$)": generate_dict(shown_datasets, orthogonal_model, "label", True, 10),
         r"Orthogonal Belief Summation ($\epsilon=10$)": generate_dict(shown_datasets, orthogonal_model, "belief", True, 10),
-        r"OAC Majority Voting ($\epsilon=10$)": generate_dict(shown_datasets, ota_method, "label", True, 10), 
-        r"OAC Belief Summation ($\epsilon=10$)":  generate_dict(shown_datasets, ota_method, "belief", True, 10),
+        r"Majority Voting with OAC ($\epsilon=10$)": generate_dict(shown_datasets, ota_method, "label", True, 10), 
+        r"Belief Summation with OAC ($\epsilon=10$)":  generate_dict(shown_datasets, ota_method, "belief", True, 10),
     }
 
     datasets = list(items.values())[0].keys()
 
     res = r"""\begin{table}[htbp!]
     \centering
-    \caption{Ablation study of the introduced ensemble methods}
+    \caption{Comparison with the Baselines}
     \resizebox{0.45\textwidth}{!}{\begin{tabular}{""" + "l" + "c"*len(datasets) + r"""}"""
 
     res += r"""
@@ -117,4 +117,4 @@ if __name__ == "__main__":
     \label{tab:ablation_study}
     \end{table}"""
 
-    save_txt("figures", "table_ablation_study.tex", res)
+    save_txt("figures", "table_comparison.tex", res)
