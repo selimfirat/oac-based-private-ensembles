@@ -37,9 +37,9 @@ def print_items(items):
         for dataset in datasets:
             max_score = np.max([curitem[dataset][0] for curitem in items.values()])
             if np.around(item[dataset][0], 4) == np.around(max_score, 4):
-                scores.append(r"$\mathbf{" + "{:.2f}".format(item[dataset][0] * 100) + r" \pm " + "{:.2f}".format(item[dataset][1] * 100) + "}$")
+                scores.append(r"$\mathbf{" + "{:.2f}".format(item[dataset][0] * 100) + r" {\scriptscriptstyle \pm " + "{:.2f}".format(item[dataset][1] * 100) + "}}$")
             else:
-                scores.append("${:.2f}".format(item[dataset][0]*100)  + r" \pm " + "{:.2f}".format(item[dataset][1] * 100) + "$")
+                scores.append("${:.2f}".format(item[dataset][0]*100)  + r" {\scriptscriptstyle \pm " + "{:.2f}".format(item[dataset][1] * 100) + "}$")
         
         res += " & ".join(scores) + r"\\" + "\n"
 
@@ -48,10 +48,10 @@ def print_items(items):
 if __name__ == "__main__":
     seed_everything(1)
     shown_datasets = {
-        "Cifar-10": "cifar10",
-        "Cifar-100": "cifar100",
+        "Cifar10": "cifar10",
+        "Cifar100": "cifar100",
         #"Mnist": "mnist",
-        #"Fashion-Mnist": "fashionmnist",
+        "FashionMnist": "fashionmnist",
         #"Yelp": "yelp_polarity",
         #"Emotion": "emotion",
         "Imdb": "imdb",
