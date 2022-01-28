@@ -70,6 +70,15 @@ def add_channel_noise(signal, channel_snr):
 
     return res
 
+def calculate_sigma_channel(signal, channel_snr):
+
+    return torch.sqrt( torch.mean((signal ** 2)) / channel_snr )
+
+def add_channel_noise_with_std(signal, std):        
+    res = signal + torch.normal(0, std, signal.shape)
+
+    return res
+
 def add_privacy_noise(signal, epsilon, num_participating_clients, num_devices, p):
     sigma = binary_search_sigma(0, 20, epsilon, 1e-6, num_participating_clients, num_devices, p)
 
@@ -78,12 +87,19 @@ def add_privacy_noise(signal, epsilon, num_participating_clients, num_devices, p
     return res
 
 def air_sum(signals, channel_snr):
+
+    max_sigma_channel = -1
+    sigmas = []
+    for signal in signals:
+        sigma = calculate_sigma_channel(signal, channel_snr)
+        max_sigma_channel = max(max_sigma_channel, sigma)
+        sigmas.append(sigma)
     
     signal = torch.sum(torch.stack(signals, dim=0), dim=0)
     
-    signal = add_channel_noise(signal, channel_snr)
+    signal = add_channel_noise_with_std(signal, max_sigma_channel)
     
-    print(signal.shape)
+    print(sigmas)
     
     return signal
 

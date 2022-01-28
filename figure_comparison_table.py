@@ -37,9 +37,9 @@ def print_items(items):
         for dataset in datasets:
             max_score = np.max([curitem[dataset][0] for curitem in items.values()])
             if np.around(item[dataset][0], 4) == np.around(max_score, 4):
-                scores.append(r"{\bf" + "{:.2f}".format(item[dataset][0] * 100) + r" \pm " + "{:.2f}".format(item[dataset][1] * 100) + "}")
+                scores.append(r"$\mathbf{" + "{:.2f}".format(item[dataset][0] * 100) + r" \pm " + "{:.2f}".format(item[dataset][1] * 100) + "}$")
             else:
-                scores.append("{:.2f}".format(item[dataset][0]*100)  + r" \pm " + "{:.2f}".format(item[dataset][1] * 100))
+                scores.append("${:.2f}".format(item[dataset][0]*100)  + r" \pm " + "{:.2f}".format(item[dataset][1] * 100) + "$")
         
         res += " & ".join(scores) + r"\\" + "\n"
 
