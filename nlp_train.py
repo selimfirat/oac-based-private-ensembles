@@ -1,6 +1,6 @@
 '''Train CIFAR10 with PyTorch. Took parts of the code from: https://github.com/kuangliu/pytorch-cifar''' 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 #os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 from utils import seed_everything
@@ -65,6 +65,9 @@ datasets = {
     },
     "imdb": {
         "num_classes": 2,
+    },
+    "emotion": {
+        "num_classes": 6,
     }
 }
 batch_size = 16

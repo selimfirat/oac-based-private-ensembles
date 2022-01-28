@@ -5,36 +5,54 @@ from utils import seed_everything
 
 num_repeats = 5
 
-def ota_method(data, client_output, is_private, epsilon=1.0):
+def ota_method(data, client_output, is_private, epsilon=1.0, apply_softmax=False):
     seed_everything(1)
     
-    return get_avg_score(data_name=data, num_repeats=num_repeats, num_devices=20, p=1.0, A_t=1.0, client_output=client_output, is_private=is_private, epsilon=epsilon, channel_snr=10)
+    return get_avg_score(data_name=data, num_repeats=num_repeats, num_devices=20, p=1.0, A_t=1.0, client_output=client_output, is_private=is_private, epsilon=epsilon, channel_snr=10, apply_softmax=apply_softmax)
 
-def single_model(data, client_output, is_private, epsilon=1.0):
+def single_model(data, client_output, is_private, epsilon=1.0, apply_softmax=False):
     seed_everything(1)
 
-    return get_avg_score_single_model(data_name=data, num_repeats=num_repeats, num_devices=20, p=1.0, A_t=1.0, client_output=client_output, is_private=is_private, epsilon=epsilon, channel_snr=10)
+    return get_avg_score_single_model(data_name=data, num_repeats=num_repeats, num_devices=20, p=1.0, A_t=1.0, client_output=client_output, is_private=is_private, epsilon=epsilon, channel_snr=10, apply_softmax=apply_softmax)
 
-def orthogonal_model(data, client_output, is_private, epsilon=1.0):
+def orthogonal_model(data, client_output, is_private, epsilon=1.0, apply_softmax=False):
     seed_everything(1)
 
-    return get_avg_score_different_channels(data_name=data, num_repeats=num_repeats, num_devices=20, p=1.0, A_t=1.0, client_output=client_output, is_private=is_private, epsilon=epsilon, channel_snr=10)
+    return get_avg_score_different_channels(data_name=data, num_repeats=num_repeats, num_devices=20, p=1.0, A_t=1.0, client_output=client_output, is_private=is_private, epsilon=epsilon, channel_snr=10, apply_softmax=apply_softmax)
 
 def generate_dict(shown_datasets, method, *attrs):
     res = {}
     for name, key in shown_datasets.items():
-        res[name] = method(key, *attrs)
+        res[name] = method(key, *attrs, apply_softmax=key in ["yelp_polarity", "emotion", "yelp_review_full", "imdb"])[0]
 
     return res
-    
+
+def print_items(items):
+    datasets = list(items.values())[0].keys()
+
+    for method_name, item in items.items():
+        res = method_name + " & "
+        scores = []
+        for dataset in datasets:
+            max_score = np.max([curitem[dataset][0] for curitem in items_private.values()])
+            if np.around(item[dataset][0], 4) == np.around(max_score, 4):
+                scores.append(r"{\bf" + "{:.2f}".format(item[dataset][0] * 100) + r" \pm " + "{:.2f}".format(item[dataset][1] * 100) + "}")
+            else:
+                scores.append("{:.2f}".format(item[dataset][0]*100  + r" \pm " + "{:.2f}".format(item[dataset][1] * 100)))
+        
+        res += " & ".join(scores) + r"\\" + "\n"
+
+    return res
+
 if __name__ == "__main__":
     seed_everything(1)
     shown_datasets = {
         "Cifar-10": "cifar10",
         "Cifar-100": "cifar100",
-        "Mnist": "mnist",
-        "Fashion-Mnist": "fashionmnist",
-        "Yelp": "yelp_polarity",
+        #"Mnist": "mnist",
+        #"Fashion-Mnist": "fashionmnist",
+        #"Yelp": "yelp_polarity",
+        #"Emotion": "emotion",
         "Imdb": "imdb",
     }
 
@@ -53,6 +71,7 @@ if __name__ == "__main__":
         r"Majority Voting with OAC ($\epsilon=1$)": generate_dict(shown_datasets, ota_method, "label", True), 
         r"Belief Summation with OAC ($\epsilon=1$)":  generate_dict(shown_datasets, ota_method, "belief", True),
     }
+
     items_weakprivate = {
         r"Single Best Vote ($\epsilon=10$)": generate_dict(shown_datasets, single_model, "label", True, 10),
         r"Orthogonal Majority Voting ($\epsilon=10$)": generate_dict(shown_datasets, orthogonal_model, "label", True, 10),
@@ -72,45 +91,15 @@ if __name__ == "__main__":
     \toprule
     Method & """ + " & ".join(datasets) + r"\\ \midrule"  + "\n"
     
-    for method_name, item in items.items():
-        res += method_name + " & "
-        scores = []
-        for dataset in datasets:
-            max_score = np.max([curitem[dataset] for curitem in items.values()])
-            if np.around(item[dataset], 4) == np.around(max_score, 4):
-                scores.append(r"{\bf" +"{:.2f}".format(item[dataset] * 100) + "}")
-            else:
-                scores.append("{:.2f}".format(item[dataset]*100))
-        
-        res += " & ".join(scores) + r"\\" + "\n"
+    res += print_items(items)
 
     res += r"""\midrule""" + "\n"
     
-    for method_name, item in items_weakprivate.items():
-        res += method_name + " & "
-        scores = []
-        for dataset in datasets:
-            max_score = np.max([curitem[dataset] for curitem in items_weakprivate.values()])
-            if np.around(item[dataset], 4) == np.around(max_score, 4):
-                scores.append(r"{\bf" +"{:.2f}".format(item[dataset] * 100) + "}")
-            else:
-                scores.append("{:.2f}".format(item[dataset]*100))
-        
-        res += " & ".join(scores) + r"\\" + "\n"
+    res += print_items(items_weakprivate)
 
     res += r"""\midrule""" + "\n"
     
-    for method_name, item in items_private.items():
-        res += method_name + " & "
-        scores = []
-        for dataset in datasets:
-            max_score = np.max([curitem[dataset] for curitem in items_private.values()])
-            if np.around(item[dataset], 4) == np.around(max_score, 4):
-                scores.append(r"{\bf" +"{:.2f}".format(item[dataset] * 100) + "}")
-            else:
-                scores.append("{:.2f}".format(item[dataset]*100))
-        
-        res += " & ".join(scores) + r"\\" + "\n"
+    res += print_items(items_private)
 
     res += r"""\bottomrule
     \end{tabular}}

@@ -72,8 +72,8 @@ def add_channel_noise(signal, channel_snr):
 
     return res
 
-def add_privacy_noise(signal, epsilon, num_participating_clients, p):
-    sigma = binary_search_sigma(0, 20, epsilon, 1e-6, num_participating_clients, p)
+def add_privacy_noise(signal, epsilon, num_participating_clients, num_devices, p):
+    sigma = binary_search_sigma(0, 20, epsilon, 1e-6, num_participating_clients, num_devices, p)
 
     res = signal + torch.normal(0, sigma, size=signal.shape)
 
@@ -89,15 +89,18 @@ def air_sum(signals, channel_snr):
     
     return signal
 
-def client_model(beliefs, client_output, is_private, epsilon, num_participating_clients, p, A_t):
-
-    res = beliefs # torch.nn.functional.softmax(beliefs, dim=1) already softmax output
+def client_model(beliefs, client_output, is_private, epsilon, num_participating_clients, p, A_t, apply_softmax=False):
+    if apply_softmax:
+        res = torch.nn.functional.softmax(beliefs, dim=1)
+    else:
+        res = beliefs # torch.nn.functional.softmax(beliefs, dim=1) already softmax output
     
     if client_output == "label":
         res = torch.nn.functional.one_hot(res.argmax(dim=1), beliefs.shape[1])
     
     if is_private:
-        res = add_privacy_noise(res, epsilon, num_participating_clients, p)
+        num_devices = 20 # temporary fix
+        res = add_privacy_noise(res, epsilon, num_participating_clients, num_devices, p)
     
     res = A_t * res
     
@@ -107,10 +110,10 @@ def server_model(signal, A_t):
     
     return (signal / A_t).argmax(dim=1)
 
-def get_avg_score(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr):
+def get_avg_score(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr, apply_softmax=False):
     results = get_results(data_name=data_name, num_devices=num_devices, num_repeats=num_repeats, main_dir="results")
     
-    total_score = 0.0
+    scores = []
     for seed_idx, (y_test_beliefs_dict, y_test_true) in get_y_test_beliefs(results, num_repeats).items():
         
         print(f"Seed {seed_idx}")
@@ -118,20 +121,24 @@ def get_avg_score(data_name, num_repeats, num_devices, p, A_t, client_output, is
         participating_clients = select_participating_devices(p, num_devices)
         print("# Participating Clients: ",len(participating_clients))
         
-        participating_client_beliefs = [client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, len(participating_clients), p, A_t) for device_idx in participating_clients]
+        participating_client_beliefs = [client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, len(participating_clients), p, A_t, apply_softmax) for device_idx in participating_clients]
         
         received_signal = air_sum(participating_client_beliefs, channel_snr)
         
         y_test_pred = server_model(received_signal, A_t)
         
-        total_score += calculate_score(y_test_true, y_test_pred)
+        score = calculate_score(y_test_true, y_test_pred)
+        scores.append(score)
     
-    return total_score / num_repeats
+    scores = np.array(scores)
 
-def get_avg_score_single_model(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr):
+    return scores.mean(), scores.std()
+
+def get_avg_score_single_model(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr, apply_softmax=False):
     results = get_results(data_name=data_name, num_devices=num_devices, num_repeats=num_repeats, main_dir="results")
     
     total_score = 0.0
+    scores = []
     for seed_idx, (y_val_beliefs_dict, y_val_true, y_test_beliefs_dict, y_test_true) in get_y_val_test_beliefs(results, num_repeats).items():
         
         print(f"Seed {seed_idx}")
@@ -146,19 +153,21 @@ def get_avg_score_single_model(data_name, num_repeats, num_devices, p, A_t, clie
             if valscore > cur_best_valscore:
                 cur_best_valscore = valscore
 
-                client_beliefs = client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t)
+                client_beliefs = client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t, apply_softmax)
                 received_signal = add_channel_noise(client_beliefs, channel_snr) # air_sum(client_beliefs, channel_snr)
                 y_test_pred = server_model(received_signal, A_t)
                 cur_best_testscore = calculate_score(y_test_true, y_test_pred)
 
-        total_score += cur_best_testscore
+        scores.append(cur_best_testscore)
+    
+    scores = np.array(scores)
 
-    return total_score / num_repeats
+    return scores.mean(), scores.std()
 
-def get_avg_score_different_channels(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr):
+def get_avg_score_different_channels(data_name, num_repeats, num_devices, p, A_t, client_output, is_private, epsilon, channel_snr, apply_softmax=False):
     results = get_results(data_name=data_name, num_devices=num_devices, num_repeats=num_repeats, main_dir="results")
     
-    total_score = 0.0
+    scores = []
     for seed_idx, (y_test_beliefs_dict, y_test_true) in get_y_test_beliefs(results, num_repeats).items():
         
         print(f"Seed {seed_idx}")
@@ -166,7 +175,7 @@ def get_avg_score_different_channels(data_name, num_repeats, num_devices, p, A_t
         participating_clients = select_participating_devices(p, num_devices)
         print("# Participating Clients: ",len(participating_clients))
         
-        participating_client_beliefs = [client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t) for device_idx in participating_clients]
+        participating_client_beliefs = [client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t, apply_softmax) for device_idx in participating_clients]
         
         num_classes = participating_client_beliefs[0].shape[1]
         
@@ -180,9 +189,13 @@ def get_avg_score_different_channels(data_name, num_repeats, num_devices, p, A_t
         
         y_test_pred = server_model(final_signal, A_t)
         
-        total_score += calculate_score(y_test_true, y_test_pred)
+        score = calculate_score(y_test_true, y_test_pred)
     
-    return total_score / num_repeats
+        scores.append(score)
+    
+    scores = np.array(scores)
+
+    return scores.mean(), scores.std()
 
 if __name__ == "__main__":
     num_repeats = 5
