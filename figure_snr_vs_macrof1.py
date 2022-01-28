@@ -72,7 +72,6 @@ for dataset_name, dataset in datasets.items():
     """
 
     def snr_vs_macro_f1_method(data, client_output, is_private):
-
         
         return lambda snr: get_avg_score(data_name=data, num_repeats=5, num_devices=20, p=1.0, A_t=1.0, client_output=client_output, is_private=is_private, epsilon=1.0, channel_snr=snr)
 
