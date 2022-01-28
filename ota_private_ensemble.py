@@ -66,7 +66,7 @@ def select_participating_devices(p, num_devices):
 def add_channel_noise(signal, channel_snr):
     sigma_channel = torch.sqrt( torch.mean((signal ** 2)) / channel_snr )
         
-    res = signal + torch.normal(0, sigma_channel)
+    res = signal + torch.normal(0, sigma_channel, signal.shape)
 
     return res
 
