@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     res += r"""\bottomrule
     \end{tabular}}
-    \label{tab:ablation_study}
+    \label{tab:comparison}
     \end{table}"""
 
     save_txt("figures", "table_comparison.tex", res)

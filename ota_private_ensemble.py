@@ -15,8 +15,10 @@ def get_results(data_name, num_devices, num_repeats, main_dir="results"):
         for device_idx in range(num_devices):
             
             target_path = os.path.join(main_dir, f"{data_name}_{num_devices}devices_seed{seed_idx}", f"{device_idx}.pth")
+            
+            f = torch.load(target_path, map_location=torch.device('cpu'))
 
-            results[seed_idx][device_idx] = torch.load(target_path, map_location=torch.device('cpu'))
+            results[seed_idx][device_idx] = { k:v for k, v in f.items() if k in ["y_test_true", "y_test_pred_beliefs", "y_val_true", "y_val_pred_beliefs"] }
     
     return results
 
@@ -75,7 +77,7 @@ def calculate_sigma_channel(signal, channel_snr):
     return torch.sqrt( torch.mean((signal ** 2)) / channel_snr )
 
 def add_channel_noise_with_std(signal, std):        
-    res = signal + torch.normal(0, std, signal.shape)
+    res = signal + torch.normal(0, std, size=signal.shape)
 
     return res
 
@@ -89,17 +91,14 @@ def add_privacy_noise(signal, epsilon, num_participating_clients, num_devices, p
 def air_sum(signals, channel_snr):
 
     max_sigma_channel = -1
-    sigmas = []
     for signal in signals:
         sigma = calculate_sigma_channel(signal, channel_snr)
         max_sigma_channel = max(max_sigma_channel, sigma)
-        sigmas.append(sigma)
-    
+
     signal = torch.sum(torch.stack(signals, dim=0), dim=0)
     
     signal = add_channel_noise_with_std(signal, max_sigma_channel)
     
-    print(sigmas)
     
     return signal
 
