@@ -92,8 +92,9 @@ for dataset_name, dataset in datasets.items():
             table {
     """
             
-            for p in np.arange(1, 21, 1):
+            for snr_db in np.arange(1, 21, 1):
                 macro_f1 = item(10**(0.1*p))
+                p = 10*np.log10(snr_db)
                 res += "{:.2f}".format(p) + "\t" + "{:.3f}".format(macro_f1) + "\n"
             
             res += r"""};

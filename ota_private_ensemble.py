@@ -64,11 +64,9 @@ def select_participating_devices(p, num_devices):
     return participating_clients
 
 def add_channel_noise(signal, channel_snr):
-    sigma_channel = torch.sqrt( torch.mean((signal ** 2), dim=0) / channel_snr )
-    
-    #    print(sigma_channel.unsqueeze(0).shape, sigma_channel.unsqueeze(0).repeat(signal.shape[0], 1).shape, signal.shape)
-    
-    res = signal + torch.normal(0, sigma_channel.unsqueeze(0).repeat(signal.shape[0], 1))
+    sigma_channel = torch.sqrt( torch.mean((signal ** 2)) / channel_snr )
+        
+    res = signal + torch.normal(0, sigma_channel)
 
     return res
 
@@ -182,10 +180,9 @@ def get_avg_score_different_channels(data_name, num_repeats, num_devices, p, A_t
         final_signal = torch.zeros_like(participating_client_beliefs[0])
         
         received_signal = torch.cat(participating_client_beliefs, dim=1)
-        received_signal = add_channel_noise(received_signal, channel_snr)
         
         for i in range(len(participating_clients)):
-            final_signal += received_signal[:, i*num_classes:(i+1)*num_classes]
+            final_signal += add_channel_noise(received_signal[:, i*num_classes:(i+1)*num_classes], channel_snr)
         
         y_test_pred = server_model(final_signal, A_t)
         

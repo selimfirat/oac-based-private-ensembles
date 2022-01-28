@@ -23,22 +23,23 @@ def orthogonal_model(data, client_output, is_private, epsilon=1.0, apply_softmax
 def generate_dict(shown_datasets, method, *attrs):
     res = {}
     for name, key in shown_datasets.items():
-        res[name] = method(key, *attrs, apply_softmax=key in ["yelp_polarity", "emotion", "yelp_review_full", "imdb"])[0]
+        res[name] = method(key, *attrs, apply_softmax=key in ["yelp_polarity", "emotion", "yelp_review_full", "imdb"])
 
     return res
 
 def print_items(items):
     datasets = list(items.values())[0].keys()
 
+    res = ""
     for method_name, item in items.items():
-        res = method_name + " & "
+        res += method_name + " & "
         scores = []
         for dataset in datasets:
-            max_score = np.max([curitem[dataset][0] for curitem in items_private.values()])
+            max_score = np.max([curitem[dataset][0] for curitem in items.values()])
             if np.around(item[dataset][0], 4) == np.around(max_score, 4):
                 scores.append(r"{\bf" + "{:.2f}".format(item[dataset][0] * 100) + r" \pm " + "{:.2f}".format(item[dataset][1] * 100) + "}")
             else:
-                scores.append("{:.2f}".format(item[dataset][0]*100  + r" \pm " + "{:.2f}".format(item[dataset][1] * 100)))
+                scores.append("{:.2f}".format(item[dataset][0]*100)  + r" \pm " + "{:.2f}".format(item[dataset][1] * 100))
         
         res += " & ".join(scores) + r"\\" + "\n"
 
