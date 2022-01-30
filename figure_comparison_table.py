@@ -37,9 +37,9 @@ def print_items(items):
         for dataset in datasets:
             max_score = np.max([curitem[dataset][0] for curitem in items.values()])
             if np.around(item[dataset][0], 4) == np.around(max_score, 4):
-                scores.append(r"$\mathbf{" + "{:.2f}".format(item[dataset][0] * 100) + r" {\scriptscriptstyle \pm " + "{:.2f}".format(item[dataset][1] * 100) + "}}$")
+                scores.append(r"$\mathbf{" + "{:.2f}".format(item[dataset][0] * 100) + r" {\scriptstyle \pm " + "{:.2f}".format(item[dataset][1] * 100) + "}}$")
             else:
-                scores.append("${:.2f}".format(item[dataset][0]*100)  + r" {\scriptscriptstyle \pm " + "{:.2f}".format(item[dataset][1] * 100) + "}$")
+                scores.append("${:.2f}".format(item[dataset][0]*100)  + r" {\scriptstyle \pm " + "{:.2f}".format(item[dataset][1] * 100) + "}$")
         
         res += " & ".join(scores) + r"\\" + "\n"
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     res = r"""\begin{table}[htbp!]
     \centering
     \caption{Comparison with the Baselines}
-    \resizebox{0.45\textwidth}{!}{\begin{tabular}{""" + "l" + "c"*len(datasets) + r"""}"""
+    \resizebox{0.48\textwidth}{!}{\begin{tabular}{""" + "l" + "c"*len(datasets) + r"""}"""
 
     res += r"""
     \toprule

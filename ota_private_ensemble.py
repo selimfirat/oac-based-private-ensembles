@@ -102,7 +102,7 @@ def air_sum(signals, channel_snr):
     
     return signal
 
-def client_model(beliefs, client_output, is_private, epsilon, num_participating_clients, p, A_t, apply_softmax=False):
+def client_model(beliefs, client_output, is_private, epsilon, num_participating_clients, p, A_t, apply_softmax, num_devices):
     if apply_softmax:
         res = torch.nn.functional.softmax(beliefs, dim=1)
     else:
@@ -112,7 +112,7 @@ def client_model(beliefs, client_output, is_private, epsilon, num_participating_
         res = torch.nn.functional.one_hot(res.argmax(dim=1), beliefs.shape[1])
     
     if is_private:
-        num_devices = 20 # temporary fix
+        #num_devices = 20 # temporary fix
         res = add_privacy_noise(res, epsilon, num_participating_clients, num_devices, p)
     
     res = A_t * res
@@ -134,7 +134,7 @@ def get_avg_score(data_name, num_repeats, num_devices, p, A_t, client_output, is
         participating_clients = select_participating_devices(p, num_devices)
         print("# Participating Clients: ",len(participating_clients))
         
-        participating_client_beliefs = [client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, len(participating_clients), p, A_t, apply_softmax) for device_idx in participating_clients]
+        participating_client_beliefs = [client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, len(participating_clients), p, A_t, apply_softmax, num_devices) for device_idx in participating_clients]
         
         received_signal = air_sum(participating_client_beliefs, channel_snr)
         
@@ -166,7 +166,7 @@ def get_avg_score_single_model(data_name, num_repeats, num_devices, p, A_t, clie
             if valscore > cur_best_valscore:
                 cur_best_valscore = valscore
 
-                client_beliefs = client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t, apply_softmax)
+                client_beliefs = client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t, apply_softmax, 1)
                 received_signal = add_channel_noise(client_beliefs, channel_snr) # air_sum(client_beliefs, channel_snr)
                 y_test_pred = server_model(received_signal, A_t)
                 cur_best_testscore = calculate_score(y_test_true, y_test_pred)
@@ -188,7 +188,7 @@ def get_avg_score_different_channels(data_name, num_repeats, num_devices, p, A_t
         participating_clients = select_participating_devices(p, num_devices)
         print("# Participating Clients: ",len(participating_clients))
         
-        participating_client_beliefs = [client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t, apply_softmax) for device_idx in participating_clients]
+        participating_client_beliefs = [client_model(y_test_beliefs_dict[device_idx], client_output, is_private, epsilon, 1, p, A_t, apply_softmax, 1) for device_idx in participating_clients]
         
         num_classes = participating_client_beliefs[0].shape[1]
         

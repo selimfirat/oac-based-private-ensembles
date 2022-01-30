@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     \begin{figure}[htbp!]
     \centering
-    \ref{named}
+    \ref*{named}
     \begin{tikzpicture}[scale=0.92]
     \begin{axis}[
     legend columns=2,
@@ -104,7 +104,7 @@ if __name__ == "__main__":
         plot_end = r"""
         \end{axis}
     \end{tikzpicture}
-    \caption{Analysis of performance on varying conditions: channel SNR (left) and participation probability $p$ (right).}
+    \caption{Analysis of ensemble methods' performance with OOAC for varying conditions: channel SNR (left) and participation probability $p$ (right).}
     \label{fig:conditions}
     \end{figure}
         """
