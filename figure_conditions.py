@@ -2,9 +2,8 @@ import numpy as np
 from ota_private_ensemble import get_avg_score
 
 from privacy import binary_search_sigma
-from utils import save_txt
+from utils import save_txt, seed_everything
 def p_vs_macro_f1_method(data, client_output, is_private):
-
     
     return lambda p: get_avg_score(data_name=data, num_repeats=5, num_devices=20, p=p, A_t=1.0, client_output=client_output, is_private=is_private, epsilon=1.0, channel_snr=10)
 
@@ -125,6 +124,7 @@ if __name__ == "__main__":
 """
         
         for snr_db in np.arange(-2, 21, 2):
+            seed_everything(1)
             macro_f1 = item(10**(0.1*snr_db))[0] # convert db to original
             res += str(snr_db) + "\t" + "{:.4f}".format(macro_f1) + "\n"
         
@@ -145,6 +145,7 @@ if __name__ == "__main__":
         table {
 """
         for p in np.arange(0.1, 1.01, 0.1):
+            seed_everything(1)
             macro_f1 = item(p)[0]
             res += "{:.2f}".format(p) + "\t" + "{:.4f}".format(macro_f1) + "\n"
         

@@ -1,7 +1,5 @@
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"
-
 from privacy import binary_search_sigma
 import torch
 import numpy as np
