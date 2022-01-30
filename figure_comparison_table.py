@@ -94,9 +94,9 @@ if __name__ == "__main__":
     
     res += print_items(items)
 
-    res += r"""\midrule""" + "\n"
+    #res += r"""\midrule""" + "\n"
     
-    res += print_items(items_weakprivate)
+    #res += print_items(items_weakprivate)
 
     res += r"""\midrule""" + "\n"
     

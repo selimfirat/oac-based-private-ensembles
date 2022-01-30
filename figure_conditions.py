@@ -103,7 +103,7 @@ if __name__ == "__main__":
         plot_end = r"""
         \end{axis}
     \end{tikzpicture}
-    \caption{Analysis of ensemble methods' performance with OOAC for varying conditions: channel SNR (left) and participation probability $p$ (right).}
+    \caption{Analysis of ensemble methods' performance with OAC for varying conditions: channel SNR (left) and participation probability $p$ (right).}
     \label{fig:conditions}
     \end{figure}
         """
