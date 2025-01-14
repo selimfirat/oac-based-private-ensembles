@@ -2,6 +2,18 @@
 
 This repository contains the source code for the "Over-the-air ensemble inference with model privacy" paper.
 
+### Citation
+Please cite the paper if this code or paper has been useful to you:
+```
+@inproceedings{yilmaz2022over,
+  title={Over-the-air ensemble inference with model privacy},
+  author={Yilmaz, Selim F and Has{\i}rc{\i}o{\u{g}}lu, Burak and G{\"u}nd{\"u}z, Deniz},
+  booktitle={2022 IEEE International Symposium on Information Theory (ISIT)},
+  pages={1265--1270},
+  year={2022}
+}
+```
+
 ### Installation
 * Install conda and torch manually (recommended)
 * `pip install -r requirements.txt`
