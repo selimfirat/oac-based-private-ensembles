@@ -1,5 +1,4 @@
-# Over-the-Air Ensemble Inference with Model Privacy [\[aRxiv\]](https://arxiv.org/abs/2202.03129) [\[IEEE\]](https://ieeexplore.ieee.org/abstract/document/10829586)
-
+# Over-the-Air Ensemble Inference with Model Privacy [\[aRxiv\]](https://arxiv.org/abs/2202.03129) [\[IEEE\]](https://ieeexplore.ieee.org/abstract/document/9834591)
 
 This repository contains the source code for the "Over-the-air ensemble inference with model privacy" paper.
 
